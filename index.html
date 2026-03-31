@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Emlak İstihbarat v14.1 | Agency Partners</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: #f8fafc; min-height: 100vh; overflow-x: hidden; }
+        .glass { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .active-city { background: #3b82f6; border-color: #60a5fa; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+        .active-district { background: rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
+        .agency-text { text-shadow: 0 0 15px rgba(59, 130, 246, 0.4); letter-spacing: 0.15em; }
+        .card-entry { animation: fadeIn 0.3s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+
+    <div class="max-w-[1600px] mx-auto">
+        
+        <div class="text-center mb-10 animate__animated animate__fadeIn">
+            <p class="agency-text text-slate-300 text-[11px] font-bold uppercase italic tracking-[0.2em]">
+                ~ Difference Agency Serhat Ezibay & Eren Taş ~
+            </p>
+            <div class="h-[1px] w-64 bg-gradient-to-r from-transparent via-blue-500 to-transparent mx-auto mt-3 opacity-60"></div>
+        </div>
+
+        <header class="flex flex-col lg:flex-row justify-between items-center mb-8 gap-4 border-b border-white/5 pb-6">
+            <div>
+                <h1 class="text-4xl font-extrabold tracking-tighter text-blue-500 uppercase">DATA<span class="text-white">HUNTER</span></h1>
+                <p id="counter" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1 italic">Pro Analiz & CRM Merkezi</p>
+            </div>
+            <div class="flex gap-3">
+                <select id="sort" onchange="renderData()" class="bg-slate-900 border border-white/10 px-6 py-3 rounded-2xl text-xs font-black outline-none cursor-pointer">
+                    <option value="weighted">💎 PREMIUM SKOR</option>
+                    <option value="rating_high">⭐ EN YÜKSEK PUAN</option>
+                    <option value="reviews_high">💬 EN ÇOK YORUM</option>
+                    <option value="newest">🕒 EN YENİLER</option>
+                </select>
+                <button onclick="downloadCSV()" class="bg-emerald-600 px-8 py-3 rounded-2xl font-black text-xs transition-all uppercase">Excel İndir</button>
+            </div>
+        </header>
+
+        <div id="cityBox" class="flex gap-2 mb-4 overflow-x-auto no-scrollbar pb-2"></div>
+        <div id="districtBox" class="flex gap-2 mb-10 overflow-x-auto no-scrollbar pb-2"></div>
+
+        <div id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+        
+        <div id="loadMoreContainer" class="mt-12 text-center hidden">
+            <button onclick="loadMore()" class="bg-slate-800 hover:bg-white hover:text-black px-10 py-4 rounded-2xl font-black text-xs uppercase transition-all shadow-xl border border-white/5">
+                DAHA FAZLA GÖSTER ↓
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let allData = [];
+        let filteredData = [];
+        let activeCity = 'HEPSİ';
+        let activeDistrict = 'HEPSİ';
+        let itemsToShow = 24;
+
+        async function verileriGetir() {
+            try {
+                const res = await fetch('http://localhost:3000/api/all');
+                allData = await res.json();
+                updateCityFilters();
+                updateDistrictFilters();
+                renderData();
+            } catch (e) { console.error("Hata:", e); }
+        }
+
+        function updateCityFilters() {
+            const cities = ['HEPSİ', ...new Set(allData.map(d => d.city.toUpperCase()))];
+            document.getElementById('cityBox').innerHTML = cities.map(c => `
+                <button onclick="filterByCity('${c}')" class="px-6 py-3 rounded-2xl glass text-[10px] font-black tracking-widest transition-all ${activeCity === c ? 'active-city' : 'hover:bg-white/5'}">
+                    ${c}
+                </button>
+            `).join('');
+        }
+
+        function filterByCity(c) {
+            activeCity = c; activeDistrict = 'HEPSİ'; itemsToShow = 24;
+            updateCityFilters(); updateDistrictFilters(); renderData();
+        }
+
+        function updateDistrictFilters() {
+            const box = document.getElementById('districtBox');
+            if(activeCity === 'HEPSİ') { box.innerHTML = ""; return; }
+            const dists = ['HEPSİ', ...new Set(allData.filter(d => d.city.toUpperCase() === activeCity && d.district).map(d => d.district.toUpperCase()))];
+            if(dists.length <= 1) { box.innerHTML = ""; return; }
+            box.innerHTML = dists.map(d => `
+                <button onclick="filterByDistrict('${d}')" class="px-5 py-2.5 rounded-xl glass border-slate-700 text-[9px] font-bold italic transition-all ${activeDistrict === d ? 'active-district' : 'hover:bg-white/5'}">
+                    # ${d}
+                </button>
+            `).join('');
+        }
+
+        function filterByDistrict(d) {
+            activeDistrict = d; itemsToShow = 24;
+            updateDistrictFilters(); renderData();
+        }
+
+        function renderData() {
+            filteredData = activeCity === 'HEPSİ' ? [...allData] : allData.filter(d => d.city.toUpperCase() === activeCity);
+            if(activeDistrict !== 'HEPSİ') filteredData = filteredData.filter(d => d.district && d.district.toUpperCase() === activeDistrict);
+
+            const sort = document.getElementById('sort').value;
+            if(sort === 'weighted') filteredData.sort((a,b) => ((b.rating*0.7) + Math.log10(b.reviews+1)*1.5) - ((a.rating*0.7) + Math.log10(a.reviews+1)*1.5));
+            else if(sort === 'rating_high') filteredData.sort((a,b) => (b.rating || 0) - (a.rating || 0));
+            else if(sort === 'reviews_high') filteredData.sort((a,b) => (b.reviews || 0) - (a.reviews || 0));
+            else if(sort === 'newest') filteredData.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+            document.getElementById('counter').innerText = `📊 TOPLAM ${allData.length} | LİSTELENEN ${filteredData.length}`;
+            displayData();
+        }
+
+        function displayData() {
+            const grid = document.getElementById('grid');
+            const chunk = filteredData.slice(0, itemsToShow);
+
+            grid.innerHTML = chunk.map(item => {
+                return `
+                <div class="glass p-6 rounded-[35px] flex flex-col justify-between relative group card-entry">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-[9px] font-black text-blue-400 border border-blue-500/10 px-2 py-1 rounded uppercase tracking-widest">${item.city}</span>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-white font-black text-sm">⭐ ${item.rating || 0}</span>
+                                <span class="text-slate-500 text-[10px]">(${item.reviews || 0})</span>
+                            </div>
+                        </div>
+                        <h3 class="text-lg font-extrabold text-white leading-tight uppercase group-hover:text-blue-400 transition-colors">${item.name}</h3>
+                        <p class="text-[9px] font-bold text-slate-600 mt-1 italic"># ${item.district || 'Merkez'}</p>
+                    </div>
+
+                    <div class="mt-6 space-y-3">
+                        <textarea onchange="saveNote('${item._id}', this.value)" placeholder="CRM Notu..." class="w-full bg-black/40 border border-white/5 rounded-xl p-2 text-[10px] text-slate-400 outline-none h-12 no-scrollbar">${item.note || ''}</textarea>
+                        <div class="text-center py-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10">
+                            <span class="text-emerald-400 font-mono font-black text-sm tracking-tight">${item.phone || 'NO CONTACT'}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="https://wa.me/90${item.phone?.replace(/[^0-9]/g, '')}" target="_blank" class="flex-1 text-center bg-emerald-600/20 text-emerald-400 py-3 rounded-2xl text-[10px] font-black uppercase hover:bg-emerald-600 hover:text-white transition">WhatsApp</a>
+                            <a href="${item.link}" target="_blank" class="w-10 bg-slate-800 flex items-center justify-center rounded-2xl hover:bg-white hover:text-black transition">📍</a>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            document.getElementById('loadMoreContainer').classList.toggle('hidden', filteredData.length <= itemsToShow);
+        }
+
+        function loadMore() { itemsToShow += 24; displayData(); }
+
+        async function saveNote(id, note) {
+            await fetch('http://localhost:3000/api/note', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id, note})
+            });
+        }
+
+        function downloadCSV() {
+            let csv = "\uFEFFİsim,Puan,Yorum,Şehir,İlçe,Telefon\n";
+            allData.forEach(r => { csv += `"${r.name}","${r.rating}","${r.reviews}","${r.city}","${r.district}","${r.phone}"\n`; });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement('a');
+            a.href = window.URL.createObjectURL(blob);
+            a.download = `Agency_Partners_Data.csv`; a.click();
+        }
+
+        verileriGetir();
+        setInterval(verileriGetir, 60000);
+    </script>
+</body>
+</html>
