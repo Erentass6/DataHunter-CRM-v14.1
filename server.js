@@ -9,7 +9,11 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-const MONGODB_URL = "mongodb+srv://eren:emlakci123@cluster0.vzfztfr.mongodb.net/emlak_database?retryWrites=true&w=majority&appName=Cluster0";
+const MONGODB_URL = process.env.MONGODB_URL;
+if (!MONGODB_URL) {
+    console.error("Set the MONGODB_URL environment variable before starting the server.");
+    process.exit(1);
+}
 mongoose.connect(MONGODB_URL).then(() => console.log("✅ VERİ MERKEZİ BAĞLANDI!")).catch(err => console.log("❌ DB HATASI:", err));
 
 const Emlakci = mongoose.model('Emlakci', {
