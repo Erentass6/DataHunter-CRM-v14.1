@@ -1,38 +1,49 @@
-# 🏢 DataHunter CRM v14.1 - Real Estate Intelligence & Lead Generation
+# DataHunter — Real Estate Lead Desk Prototype
 
-**DataHunter CRM** is a professional automation platform designed to extract, analyze, and manage real estate business data directly from Google Maps. Developed by **Difference Agency (Serhat Ezibay & Eren Taş)**.
+A Node.js prototype that combines a small lead-management interface with a Puppeteer-based browser-automation experiment for location-based business listings.
 
----
+## What it demonstrates
 
-## 🚀 Key Features
-* **Deep Scraping:** Puppeteer-based engine to bypass anti-bot systems and crawl specific districts (e.g., Beşiktaş, Çankaya).
-* **Weighted Scoring Algorithm:** Ranks businesses using a custom formula: `(Rating * 0.7) + (log10(Reviews + 1) * 1.5)`.
-* **Integrated CRM Dashboard:** Features real-time note-taking, one-click WhatsApp integration, and hierarchical filtering (City/District).
-* **High Performance:** Optimized to handle 3000+ data entries without browser lag using virtual rendering.
+- Express API endpoints for reading saved records and updating notes
+- MongoDB persistence for collected business details
+- A browser-based workflow built with Puppeteer
+- A simple dashboard for reviewing records
 
----
+## Stack
 
-## 🛠️ Installation & Usage
+Node.js · Express · Puppeteer · MongoDB · HTML/CSS/JavaScript
 
-1.  **Install Dependencies:**
-    Open your terminal in the project directory and run:
-    `npm install`
+## Run locally
 
-2.  **Start the System:**
-    To launch the backend API and the scraper bot:
-    `node server.js`
+1. Install Node.js and npm.
+2. Install dependencies:
 
-3.  **Open the Dashboard:**
-    Simply open the `index.html` file in your preferred browser (Chrome/Edge).
+   ```bash
+   npm install
+   ```
 
----
+3. Set a MongoDB connection string in your shell. In PowerShell:
 
-## 🏗️ Tech Stack
-* **Backend:** Node.js, Express.js
-* **Database:** MongoDB & Mongoose (Cloud Cluster)
-* **Automation:** Puppeteer Stealth (Anti-Bot)
-* **Frontend:** Tailwind CSS, JavaScript (ES6+)
+   ```powershell
+   $env:MONGODB_URL = "mongodb+srv://<username>:<password>@<cluster>/<database>"
+   ```
 
----
-**Developers:** Serhat Ezibay & Eren Taş
-*A Difference Agency Production.*
+4. Start the server:
+
+   ```bash
+   node server.js
+   ```
+
+The browser automation requires a desktop browser environment. The interface can be opened from the local project files while the API server is running.
+
+## Responsible-use note
+
+This is an experimental prototype, not a production scraping service. Browser automation can break when third-party pages change and may be restricted by their terms. Use only where you have permission, respect applicable terms and privacy rules, and do not assume this project bypasses access controls.
+
+## Security
+
+The MongoDB connection is read from the `MONGODB_URL` environment variable. Never commit database credentials or local `.env` files. If a credential was already committed, rotate it at the provider; removing it from the latest source does not remove older Git history.
+
+## Attribution
+
+The original project README credits Difference Agency and lists Serhat Ezibay and Eren Taş as developers.
